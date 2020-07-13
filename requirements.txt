@@ -1,7 +1,7 @@
 alphalens==0.3.6
 graphviz==0.10.1
 numpy==1.16.2
-pandas==0.24.1
+pandas==0.22.0
 matplotlib==2.1.2
 python-dateutil==2.6.1
 pytz==2017.3

@@ -6,7 +6,7 @@ matplotlib==2.1.2
 python-dateutil==2.6.1
 pytz==2017.3
 scipy==1.0.1
-scikit-learn==0.19.1
+scikit-learn==0.23.1
 six==1.11.0
 tables==3.3.0
 tqdm==4.19.5

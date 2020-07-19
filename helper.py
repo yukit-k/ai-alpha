@@ -128,7 +128,7 @@ def get_unix_time(factor_data):
 
 
 def build_factor_data(factor_data, pricing):
-    return {factor_name: al.utils.get_clean_factor_and_forward_returns(factor=data, prices=pricing, periods=[1])
+    return {factor_name: al.utils.get_clean_factor_and_forward_returns(factor=data, prices=pricing, max_loss=0.35, periods=[1])
         for factor_name, data in factor_data.iteritems()}
 
 def wins(x,a,b):
@@ -387,25 +387,28 @@ class NoOverlapVoter(NoOverlapVoterAbstract):
     def _non_overlapping_estimators(self, x, y, classifiers, n_skip_samples):
         return non_overlapping_estimators(x, y, classifiers, n_skip_samples)
 
-def train_model(alpha_factors, features, target_label, clf_parameters):
-    temp = alpha_factors.dropna().copy()
-    X = temp[features]
-    y = temp[target_label]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
-    clf = RandomForestClassifier(**clf_parameters)
-    clf_nov = NoOverlapVoter(clf)
-    clf_nov.fit(X_train, y_train)
+def train_model(alpha_factors, features, target_label, clf_parameters, train):
+    if train:
+        temp = alpha_factors.dropna().copy()
+        X = temp[features]
+        y = temp[target_label]
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+        clf = RandomForestClassifier(**clf_parameters)
+        clf_nov = NoOverlapVoter(clf)
+        clf_nov.fit(X_train, y_train)
 
-    train_score = clf_nov.score(X_train, y_train.values)
-    test_score = clf_nov.score(X_test, y_test.values)
-    oob_score = clf_nov.oob_score_
+        train_score = clf_nov.score(X_train, y_train.values)
+        test_score = clf_nov.score(X_test, y_test.values)
+        oob_score = clf_nov.oob_score_
 
-    # Re-training
-    clf_nov.fit(X, y)
-    train_score_rt = clf_nov.score(X, y.values)
-    oob_score_rt = clf_nov.oob_score_
+        # Re-training
+        clf_nov.fit(X, y)
+        train_score_rt = clf_nov.score(X, y.values)
+        oob_score_rt = clf_nov.oob_score_
 
-    return [clf_nov, train_score, test_score, oob_score, train_score_rt, oob_score_rt]
+        return [clf_nov, train_score, test_score, oob_score, train_score_rt, oob_score_rt]
+    else:
+        return None
 
 def plot_tree_classifier(clf, feature_names=None):
     dot_data = export_graphviz(
@@ -522,6 +525,14 @@ def get_alpha_vector(clf, alpha_factors_today, features, target_label):
     alpha_vector = X[['AI_ALPHA']]
     return alpha_vector * scale
 
+def get_alpha_vector2(alpha_factors_today, factor_columns, shape_ratio_value):
+    scale = 1
+    shape_ratio_value = np.nan_to_num(shape_ratio_value)
+    shape_ratio_value = shape_ratio_value / np.sum(shape_ratio_value)
+    alpha_factors_today['AI_ALPHA'] = np.dot(alpha_factors_today[factor_columns], shape_ratio_value)
+    alpha_vector  = alpha_factors_today[['AI_ALPHA']]
+    return scale * alpha_vector
+
 ######### Optimization with Constraints by Risk Model #########
 
 def get_lambda(df):
@@ -590,7 +601,7 @@ class AbstractOptimalHoldings(ABC):
         constraints = self._get_constraints(weights, factor_betas.loc[alpha_vector.index].values, risk)
         
         prob = cvx.Problem(obj, constraints)
-        prob.solve(max_iters=500)
+        prob.solve(max_iters=500, solver='SCS')
 
         optimal_weights = np.asarray(weights.value).flatten()
         

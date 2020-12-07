@@ -1,6 +1,6 @@
 # Data
 data/
-.pickle
+*.pickle
 
 # Zipline Master
 zipline-master

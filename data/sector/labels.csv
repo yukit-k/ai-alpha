@@ -1,0 +1,12 @@
+Sector,Sector_i
+Healthcare,0
+Technology,1
+Consumer Defensive,2
+Industrials,3
+Utilities,4
+Financial Services,5
+Real Estate,6
+Communication Services,7
+Consumer Cyclical,8
+Energy,9
+Basic Materials,10

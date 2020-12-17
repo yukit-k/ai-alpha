@@ -1,5 +1,5 @@
 # Data
-data/
+data/backtest/
 *.pickle
 
 # Zipline Master

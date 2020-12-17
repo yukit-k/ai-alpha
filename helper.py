@@ -533,6 +533,10 @@ def get_alpha_vector2(alpha_factors_today, factor_columns, shape_ratio_value):
     alpha_vector  = alpha_factors_today[['AI_ALPHA']]
     return scale * alpha_vector
 
+
+def get_factor_exposures(factor_betas, weights):
+    return factor_betas.loc[weights.index].T.dot(weights)
+    
 ######### Optimization with Constraints by Risk Model #########
 
 def get_lambda(df):

@@ -53,18 +53,23 @@ def build_factor_data(factor_data, pricing):
         for factor_name, data in factor_data.iteritems()}
 
 def show_sample_results(data, samples, classifier, factors, pricing, ymin=0.9, ymax=1.5):
-    # Calculate the Alpha Score
-    prob_array=[-1,1]
-    alpha_score = classifier.predict_proba(samples).dot(np.array(prob_array))
-    
-    # Add Alpha Score to rest of the factors
-    alpha_score_label = 'AI_ALPHA'
-    factors_with_alpha = data.loc[samples.index].copy()
-    factors_with_alpha[alpha_score_label] = alpha_score
+    factors_sample = data.loc[samples.index].copy()
+    factors_label = factors
+
+    # Add AI_ALPHA factor if classifier is not None
+    if classifier:
+        # Calculate the Alpha Score
+        prob_array=[-1,1]
+        alpha_score = classifier.predict_proba(samples).dot(np.array(prob_array))
+        
+        # Add Alpha Score to rest of the factors
+        alpha_score_label = 'AI_ALPHA'
+        factors_sample[alpha_score_label] = alpha_score
+        factors_label = factors + [alpha_score_label]
     
     # Setup data for AlphaLens
     print('Cleaning Data...\n')
-    factor_data = build_factor_data(factors_with_alpha[factors + [alpha_score_label]], pricing)
+    factor_data = build_factor_data(factors_sample[factors_label], pricing)
     print('\n-----------------------\n')
     
     # Calculate Factor Returns and Sharpe Ratio
@@ -81,13 +86,14 @@ def show_sample_results(data, samples, classifier, factors, pricing, ymin=0.9, y
     
     return factor_data
 
-def get_alpha_vector(clf, alpha_factors_today, features, target_label):
-    scale = 1
-    X = alpha_factors_today[features]
-    alpha_score = clf.predict_proba(X).dot(np.array([-1,1]))
-    X['AI_ALPHA'] = alpha_score
-    alpha_vector = X[['AI_ALPHA']]
-    return alpha_vector * scale
+def get_alpha_vector_mean_lastday(factors, labels):
+    selected_factors = factors[labels]
+    # print('Selected Factors: {}'.format(', '.join(selected_factors)))
+
+    selected_factors['alpha_vector'] = selected_factors.mean(axis=1)
+    alphas = selected_factors[['alpha_vector']]
+    alpha_vector = alphas.loc[selected_factors.index.get_level_values(0)[-1]]
+    return alpha_vector
 
 def get_alpha_vector2(alpha_factors_today, factor_columns, shape_ratio_value):
     scale = 1

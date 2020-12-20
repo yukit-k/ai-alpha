@@ -1,12 +1,16 @@
 # Alpha Research with AI
 ## Project Description
-Please refer to the medium post:
+Please refer to the medium post: https://towardsdatascience.com/how-to-build-quant-algorithmic-trading-model-in-python-12abab49abe3
 
 ## File Description
-### Alpha Research.ipynb
-Main jupyter notebook for visualization. Functions are defined in `myalpha` package.
+### Alpha Research Base.ipynb
+Jupyter notebook to execute alpha research process without Machine Learning.
+Functions are defined in `myalpha` package.
 
-### `myalpha` package
+### Alpha Research AI.ipynb
+Add Machine Learning to generate Alpha vector on top of the base process.
+
+### myalpha package
 This include the following modules used in the notebook for basic alpha research
 
 #### datautil.py

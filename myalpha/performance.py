@@ -42,7 +42,7 @@ def plot_factor_rank_autocorrelation(factor_data):
             names=['date', 'asset']))
         for factor, factor_data in factor_data.items()}
 
-    for factor, factor_data in unixt_factor_data.items():
+    for factor, factor_data in factor_data.items():
         ls_FRA[factor] = al.performance.factor_rank_autocorrelation(factor_data)
 
     ls_FRA.plot(title="Factor Rank Autocorrelation", ylim=(0.8, 1.0), figsize=(12,7))

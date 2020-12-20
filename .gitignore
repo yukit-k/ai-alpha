@@ -1,8 +1,9 @@
-# Data
+# Excluding Data and Docs
 data/backtest/
 *.pickle
+docs/
 
-# Zipline Master
+# Cloned zipline repo
 zipline-master
 
 # vscode

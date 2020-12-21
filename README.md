@@ -1,6 +1,6 @@
 # Alpha Research with AI
 ## Project Description
-Please refer to the medium post: https://towardsdatascience.com/how-to-build-quant-algorithmic-trading-model-in-python-12abab49abe3
+Please refer to the medium post: https://yuki678.medium.com/how-to-build-quant-algorithmic-trading-model-in-python-12abab49abe3?sk=56d5b2b038ce6aefa6c2049cff9e89b6 
 
 ## File Description
 ### Alpha Research Base.ipynb

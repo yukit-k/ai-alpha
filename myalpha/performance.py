@@ -59,7 +59,7 @@ def show_sample_results(data, samples, classifier, factors, pricing, ymin=0.9, y
     # Add AI_ALPHA factor if classifier is not None
     if classifier:
         # Calculate the Alpha Score
-        prob_array=[-1,1]
+        prob_array=[-1,0,1]
         alpha_score = classifier.predict_proba(samples).dot(np.array(prob_array))
         
         # Add Alpha Score to rest of the factors

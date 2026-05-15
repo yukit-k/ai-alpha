@@ -50,7 +50,7 @@ def factor_cov_matrix(factor_returns, ann_factor):
 def idiosyncratic_var_matrix(returns, factor_returns, factor_betas, ann_factor):
     _common_returns = pd.DataFrame(np.dot(factor_returns, factor_betas.T), returns.index, returns.columns)
     _residuals = (returns - _common_returns)
-    idiosyncratic_var_matrix = pd.DataFrame(np.diag(np.var(_residuals)*ann_factor), returns.columns, returns.columns)
+    idiosyncratic_var_matrix = pd.DataFrame(np.diag(np.var(_residuals, axis=0, ddof=1) * ann_factor), returns.columns, returns.columns)
     
     return idiosyncratic_var_matrix
 
@@ -87,9 +87,13 @@ def predict_portfolio_risk(factor_betas, factor_cov_matrix, idiosyncratic_var_ma
     """
     assert len(factor_cov_matrix.shape) == 2
     
-    predicted_portfolio_risk = np.sqrt(weights.T.dot(factor_betas.dot(factor_cov_matrix).dot(factor_betas.T) + idiosyncratic_var_matrix).dot(weights))
-    
-    return predicted_portfolio_risk[0]
+    predicted_portfolio_risk = np.sqrt(
+        weights.T.dot(
+            factor_betas.dot(factor_cov_matrix).dot(factor_betas.T) + idiosyncratic_var_matrix
+        ).dot(weights)
+    )
+
+    return float(predicted_portfolio_risk.iloc[0, 0])
 
 def get_risk_exposures(factor_betas, weights):
     return factor_betas.loc[weights.index].T.dot(weights)

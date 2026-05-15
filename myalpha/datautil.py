@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from zipline.utils.numpy_utils import int64_dtype
@@ -6,6 +7,8 @@ from zipline.pipeline.engine import SimplePipelineEngine
 from zipline.pipeline.classifiers import Classifier
 from zipline.pipeline.loaders import USEquityPricingLoader
 from zipline.pipeline.data import USEquityPricing
+
+_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 class PricingLoader(object):
     def __init__(self, bundle_data):
@@ -25,7 +28,8 @@ class Sector(Classifier):
     missing_value = -1
 
     def __init__(self):
-        self.data = np.load('./data/sector/data.npy')
+        data_path = os.path.normpath(os.path.join(_MODULE_DIR, '..', 'data', 'sector', 'data.npy'))
+        self.data = np.load(data_path, allow_pickle=False)
 
     def _compute(self, arrays, dates, assets, mask):
         return np.where(
@@ -57,8 +61,8 @@ def get_universe_tickers(current_date, universe, engine):
     return universe_tickers
 
 def get_pricing(data_portal, trading_calendar, assets, start_date, end_date, field='close'):
-    end_dt = pd.Timestamp(end_date.strftime('%Y-%m-%d'), tz='UTC', freq='C')
-    start_dt = pd.Timestamp(start_date.strftime('%Y-%m-%d'), tz='UTC', freq='C')
+    end_dt = pd.Timestamp(end_date.strftime('%Y-%m-%d'), tz='UTC')
+    start_dt = pd.Timestamp(start_date.strftime('%Y-%m-%d'), tz='UTC')
 
     end_loc = trading_calendar.closes.index.get_loc(end_dt)
     start_loc = trading_calendar.closes.index.get_loc(start_dt)
@@ -66,7 +70,7 @@ def get_pricing(data_portal, trading_calendar, assets, start_date, end_date, fie
     return data_portal.get_history_window(
         assets=assets,
         end_dt=end_dt,
-        bar_count=end_loc - start_loc,
+        bar_count=end_loc - start_loc + 1,
         frequency='1d',
         field=field,
         data_frequency='daily')

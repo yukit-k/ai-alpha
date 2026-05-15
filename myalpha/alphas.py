@@ -65,7 +65,7 @@ class MarketDispersion(CustomFactor):
 
 class MarketVolatility(CustomFactor):
     inputs = [DailyReturns()]
-    window_length = 1
+    window_length = 252
     window_safe = True
     
     def compute(self, today, assets, out, returns):

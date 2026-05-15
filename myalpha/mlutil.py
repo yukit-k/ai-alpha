@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from sklearn.tree import export_graphviz
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import VotingClassifier, RandomForestClassifier
 from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import Bunch
@@ -122,10 +122,10 @@ def non_overlapping_estimators(x, y, classifiers, n_skip_samples):
     y : [Pandas Series] The target values
     '''
     fit_classifiers = []
-    
-    for i in range(n_skip_samples):
+
+    for i in range(n_skip_samples + 1):
         fit_classifiers.append(
-            classifiers[i].fit(x[i::n_skip_samples], y[i::n_skip_samples])
+            classifiers[i].fit(x[i::n_skip_samples + 1], y[i::n_skip_samples + 1])
         )
 
     return fit_classifiers
@@ -143,6 +143,8 @@ def train_model(alpha_factors, features, target_label, clf_parameters, train):
         X = temp[features]
         y = temp[target_label]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
+        if not clf_parameters.get('oob_score', False):
+            raise ValueError("clf_parameters must include oob_score=True for NoOverlapVoter.")
         clf = RandomForestClassifier(**clf_parameters)
         clf_nov = NoOverlapVoter(clf)
         clf_nov.fit(X_train, y_train)

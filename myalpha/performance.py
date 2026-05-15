@@ -37,20 +37,20 @@ def plot_factor_rank_autocorrelation(factor_data):
     ls_FRA = pd.DataFrame()
 
     unixt_factor_data = {
-        factor: factor_data.set_index(pd.MultiIndex.from_tuples(
-            [(x.timestamp(), y) for x, y in factor_data.index.values],
+        factor: df.set_index(pd.MultiIndex.from_tuples(
+            [(x.timestamp(), y) for x, y in df.index.values],
             names=['date', 'asset']))
-        for factor, factor_data in factor_data.items()}
+        for factor, df in factor_data.items()}
 
-    for factor, factor_data in factor_data.items():
-        ls_FRA[factor] = al.performance.factor_rank_autocorrelation(factor_data)
+    for factor, df in unixt_factor_data.items():
+        ls_FRA[factor] = al.performance.factor_rank_autocorrelation(df)
 
     ls_FRA.plot(title="Factor Rank Autocorrelation", ylim=(0.8, 1.0), figsize=(12,7))
     
 
 def build_factor_data(factor_data, pricing):
     return {factor_name: al.utils.get_clean_factor_and_forward_returns(factor=data, prices=pricing, max_loss=0.35, periods=[1])
-        for factor_name, data in factor_data.iteritems()}
+        for factor_name, data in factor_data.items()}
 
 def show_sample_results(data, samples, classifier, factors, pricing, ymin=0.9, ymax=1.5):
     factors_sample = data.loc[samples.index].copy()
@@ -87,9 +87,7 @@ def show_sample_results(data, samples, classifier, factors, pricing, ymin=0.9, y
     return factor_data
 
 def get_alpha_vector_mean_lastday(factors, labels):
-    selected_factors = factors[labels]
-    # print('Selected Factors: {}'.format(', '.join(selected_factors)))
-
+    selected_factors = factors[labels].copy()
     selected_factors['alpha_vector'] = selected_factors.mean(axis=1)
     alphas = selected_factors[['alpha_vector']]
     alpha_vector = alphas.loc[selected_factors.index.get_level_values(0)[-1]]
@@ -97,11 +95,14 @@ def get_alpha_vector_mean_lastday(factors, labels):
 
 def get_alpha_vector2(alpha_factors_today, factor_columns, shape_ratio_value):
     scale = 1
-    shape_ratio_value = np.nan_to_num(shape_ratio_value)
-    shape_ratio_value = shape_ratio_value / np.sum(shape_ratio_value)
-    alpha_factors_today['AI_ALPHA'] = np.dot(alpha_factors_today[factor_columns], shape_ratio_value)
-    alpha_vector  = alpha_factors_today[['AI_ALPHA']]
-    return scale * alpha_vector
+    shape_ratio_value = np.nan_to_num(shape_ratio_value, nan=0.0, posinf=0.0, neginf=0.0)
+    total = np.sum(shape_ratio_value)
+    if total == 0.0:
+        raise ValueError("Sum of Sharpe ratios is zero; cannot normalize factor weights.")
+    shape_ratio_value = shape_ratio_value / total
+    result = alpha_factors_today.copy()
+    result['AI_ALPHA'] = np.dot(result[factor_columns], shape_ratio_value)
+    return scale * result[['AI_ALPHA']]
 
 
 def get_factor_exposures(factor_betas, weights):

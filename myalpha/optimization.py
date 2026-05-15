@@ -47,8 +47,8 @@ class AbstractOptimalHoldings(ABC):
         raise NotImplementedError()
         
     def _get_risk(self, weights, factor_betas, alpha_vector_index, factor_cov_matrix, idiosyncratic_var_vector):
-        f = factor_betas.loc[alpha_vector_index].values.T * weights
-        X = factor_cov_matrix
+        f = factor_betas.loc[alpha_vector_index].values.T @ weights
+        X = (factor_cov_matrix + factor_cov_matrix.T) / 2  # enforce symmetry for PSD
         S = np.diag(idiosyncratic_var_vector.loc[alpha_vector_index].values.flatten())
 
         return cvx.quad_form(f, X) + cvx.quad_form(weights, S)
@@ -63,26 +63,32 @@ class AbstractOptimalHoldings(ABC):
         prob = cvx.Problem(obj, constraints)
         prob.solve(max_iters=500)
 
+        if prob.status not in (cvx.OPTIMAL, cvx.OPTIMAL_INACCURATE) or weights.value is None:
+            raise ValueError(
+                f"Optimization failed with status '{prob.status}'. "
+                "Check constraints for feasibility."
+            )
+
         optimal_weights = np.asarray(weights.value).flatten()
-        
+
         return pd.DataFrame(data=optimal_weights, index=alpha_vector.index)
 
 class OptimalHoldings(AbstractOptimalHoldings):
     def _get_obj(self, weights, alpha_vector):
         assert(len(alpha_vector.columns) == 1)
-        objective = cvx.Minimize(-alpha_vector.values.flatten()*weights)
-        
+        objective = cvx.Minimize(-alpha_vector.values.flatten() @ weights)
+
         return objective
-    
+
     def _get_constraints(self, weights, factor_betas, risk):
 
         assert(len(factor_betas.shape) == 2)
         
         #TODO: Implement function
         constraints = [
-        risk <= self.risk_cap ** 2,   
-        factor_betas.T*weights <= self.factor_max,
-        factor_betas.T*weights >= self.factor_min,
+        risk <= self.risk_cap ** 2,
+        factor_betas.T @ weights <= self.factor_max,
+        factor_betas.T @ weights >= self.factor_min,
         sum(weights) == 0.0,
         sum(cvx.abs(weights)) <= 1.0,
         weights >= self.weights_min,
@@ -117,7 +123,7 @@ class OptimalHoldingsRegualization(OptimalHoldings):
         """
         assert(len(alpha_vector.columns) == 1)
         
-        objective = cvx.Minimize(-alpha_vector.values.flatten()*weights + self.lambda_reg*cvx.norm(weights,2))
+        objective = cvx.Minimize(-alpha_vector.values.flatten() @ weights + self.lambda_reg*cvx.norm(weights, 2))
         
         return objective
 
